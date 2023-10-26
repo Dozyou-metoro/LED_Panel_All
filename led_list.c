@@ -60,16 +60,29 @@ int add_list(void **list_start, void *data, size_t size)
 	return count;
 }
 
-void *list_return(void *list_start, int no)
-{
-	exlist *list_top = (exlist *)list_start; // void*を_exlist構造体に変換
+void* list_return(void* list_start, int no) {
+	static void* p_start_buf = NULL;
+	static void* p_list_buf = NULL;
+	static int no_buf = 0;
 
-	for (int i = 0; i < no; i++) // 指定回リストをたどる
-	{
-		list_top = list_top->p_next;
+	if ((p_start_buf == list_start) && (no_buf <= no)) {
+		list_start = p_list_buf;
+		no = no - no_buf;
+	} else {
+		p_start_buf = list_start;
+		no_buf = 0;
 	}
 
-	return (void *)&list_top->data; // データ部分の先頭ポインタを返す
+	exlist* list_top = (exlist*)list_start;
+
+	for (int i = 0; i < no; i++) {
+		list_top = list_top->p_next;
+		no_buf++;
+	}
+
+	p_list_buf = (void*)list_top;
+
+	return (void*)&list_top->data;
 }
 
 void list_free(void **list_start)
