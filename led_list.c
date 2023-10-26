@@ -35,7 +35,7 @@ int add_list(void **list_start, void *data, size_t size)
 		return count;
 	}
 
-	exlist *buf = *list_top; // list_topを直接触るとリストの先頭ポインタが消えてしまうので先頭ポインタをコピー
+	exlist *buf = *list_top; // list_topを直接触るとリストの先頭ポインタが上書きされて消えてしまうので先頭ポインタをコピー
 
 	while (buf->p_next) // 次の要素が無くなるまでリストをたどる
 	{
@@ -60,29 +60,34 @@ int add_list(void **list_start, void *data, size_t size)
 	return count;
 }
 
-void* list_return(void* list_start, int no) {
-	static void* p_start_buf = NULL;
-	static void* p_list_buf = NULL;
-	static int no_buf = 0;
+void *list_return(void *list_start, int no)
+{
+	static void *p_start_buf = NULL; // 前回たどったリストの先頭ポインタ
+	static void *p_list_buf = NULL;	 // 前回返した要素のポインタ
+	static int no_buf = 0;			 // 前回返した要素の要素番号
 
-	if ((p_start_buf == list_start) && (no_buf <= no)) {
-		list_start = p_list_buf;
-		no = no - no_buf;
-	} else {
-		p_start_buf = list_start;
-		no_buf = 0;
+	if ((p_start_buf == list_start) && (no_buf <= no))// 前回呼ばれたリストと同じで、前回と同じかそれより後ろのデータを要求されているか否か
+	{							 
+		list_start = p_list_buf; // 前回読んだ要素のポインタで上書き
+		no = no - no_buf;		 // 前回読んだ要素と要求された要素の差に変更
+	}
+	else
+	{
+		p_start_buf = list_start; // リストの先頭ポインタをメモ
+		no_buf = 0;				  // 読んだ要素の番号をリセット
 	}
 
-	exlist* list_top = (exlist*)list_start;
+	exlist *list_top = (exlist *)list_start; // void*を_exlist構造体に変換
 
-	for (int i = 0; i < no; i++) {
+	for (int i = 0; i < no; i++)//no回リストをたどる
+	{
 		list_top = list_top->p_next;
 		no_buf++;
 	}
 
-	p_list_buf = (void*)list_top;
+	p_list_buf = (void *)list_top;//今回読んだ要素のポインタをメモ
 
-	return (void*)&list_top->data;
+	return (void *)&list_top->data;
 }
 
 void list_free(void **list_start)
@@ -90,12 +95,12 @@ void list_free(void **list_start)
 	exlist *list_top = (exlist *)*list_start; // void*を_exlist構造体に変換
 	*list_start = NULL;						  // はじめに入っていた変数をNULLに指定
 
-	exlist **buf = (*list_top).p_next;//このままだとwhile()が即終了してしまうので何かを入れておく
+	exlist **buf = (*list_top).p_next; // このままだとwhile()が即終了してしまうので何かを入れておく
 
 	while (buf)
 	{
-		buf = (*list_top).p_next;//次の要素のポインタを退避しておく
-		free(list_top);//要素をfree()
-		list_top = buf;//先ほど退避したポインタをもとに次の要素をたどる。
+		buf = (*list_top).p_next; // 次の要素のポインタを退避しておく
+		free(list_top);			  // 要素をfree()
+		list_top = buf;			  // 先ほど退避したポインタをもとに次の要素をたどる。
 	}
 }
